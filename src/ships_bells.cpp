@@ -1,12 +1,14 @@
 #include <RtcDS3231.h>
 #include <LiquidCrystal.h>
 #include <Wire.h>
+#include <ShipsBells.h>
 
 int buzzer = 6; //the pin of the active buzzer
 RtcDS3231 clock;
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
+ShipsBells shipsbells(6);
 
 #define countof(a) (sizeof(a) / sizeof(a[0]))
 
@@ -27,14 +29,14 @@ void printTime(const RtcDateTime& dt)
 void printDate(const RtcDateTime& dt)
 {
   //print the time to the lcd
-  char datestring[10];
+  char datestring[12];
 
   snprintf_P(datestring,
     countof(datestring),
     PSTR("%02u/%02u/%04u"),
-    dt.Hour(),
-    dt.Minute(),
-    dt.Second() );
+    dt.Month(),
+    dt.Day(),
+    dt.Year() );
   lcd.print(datestring);
 }
 
@@ -56,23 +58,13 @@ void bells(const RtcDateTime& now)
 
   if (double_strikes != 0 && (now.Minute() == 0 || now.Minute() == 30) && now.Second() == 0) {
     for (int i = 0; i < double_strikes; i++) {
-      digitalWrite(buzzer,HIGH);
-      delay(200);
-      digitalWrite(buzzer,LOW);
-      delay(350);
-      digitalWrite(buzzer,HIGH);
-      delay(200);
-      digitalWrite(buzzer,LOW);
-      delay(500);
+      shipsbells.doubleStrike();
     }
   }
 
     if (single_strikes != 0 && now.Second() == 0) {
     for (int i = 0; i < single_strikes; i++) {
-      digitalWrite(buzzer,HIGH);
-      delay(200);
-      digitalWrite(buzzer,LOW);
-      delay(350);
+      shipsbells.singleStrike();
     }
   }
   single_strikes = 0;
@@ -97,11 +89,6 @@ void setup() {
 
   //initialize the buzzer pin as output
   pinMode(buzzer, OUTPUT);
-
-  // never assume the Rtc was last configured by you, so
-  // just clear them to your needed state
-  clock.Enable32kHzPin(false);
-  clock.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
 
 }
 
