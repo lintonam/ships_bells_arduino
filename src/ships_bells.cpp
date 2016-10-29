@@ -24,6 +24,20 @@ void printTime(const RtcDateTime& dt)
   lcd.print(timestring);
 }
 
+void printDate(const RtcDateTime& dt)
+{
+  //print the time to the lcd
+  char datestring[10];
+
+  snprintf_P(datestring,
+    countof(datestring),
+    PSTR("%02u/%02u/%04u"),
+    dt.Hour(),
+    dt.Minute(),
+    dt.Second() );
+  lcd.print(datestring);
+}
+
 void setup() {
 
   //setup serial to be used for debugging
@@ -61,11 +75,18 @@ void loop()
   lcd.setCursor(0, 0 );
 
   //print the date to the lcd
-  lcd.print(String(now.Month()) + "/" + String(now.Day()) + "/" + String(now.Year()));
+  printDate(now);
+
+  //print a blank space
+  lcd.print(" ");
+
+  //print the temperature
+  lcd.print(clock.GetTemperature().AsFloat());
 
   //set the lcd cursor to column 0, line 1
   lcd.setCursor(0, 1);
 
+  //print the time to the lcd
   printTime(now);
 
   int single_strikes;
