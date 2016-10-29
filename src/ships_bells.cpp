@@ -38,6 +38,47 @@ void printDate(const RtcDateTime& dt)
   lcd.print(datestring);
 }
 
+void bells(const RtcDateTime& now)
+{
+  int single_strikes;
+  single_strikes = 0;
+  int double_strikes;
+
+  if (now.Minute() == 30 && now.Second() == 0) {
+    single_strikes = 1;
+  }
+
+  double_strikes = now.Hour() % 4;
+  if (double_strikes == 0 && single_strikes == 0) double_strikes = 4;
+
+  Serial.println(double_strikes);
+  Serial.println(single_strikes);
+
+  if (double_strikes != 0 && (now.Minute() == 0 || now.Minute() == 30) && now.Second() == 0) {
+    for (int i = 0; i < double_strikes; i++) {
+      digitalWrite(buzzer,HIGH);
+      delay(200);
+      digitalWrite(buzzer,LOW);
+      delay(350);
+      digitalWrite(buzzer,HIGH);
+      delay(200);
+      digitalWrite(buzzer,LOW);
+      delay(500);
+    }
+  }
+
+    if (single_strikes != 0 && now.Second() == 0) {
+    for (int i = 0; i < single_strikes; i++) {
+      digitalWrite(buzzer,HIGH);
+      delay(200);
+      digitalWrite(buzzer,LOW);
+      delay(350);
+    }
+  }
+  single_strikes = 0;
+  double_strikes = 0;
+}
+
 void setup() {
 
   //setup serial to be used for debugging
@@ -89,43 +130,8 @@ void loop()
   //print the time to the lcd
   printTime(now);
 
-  int single_strikes;
-  single_strikes = 0;
-  int double_strikes;
+  bells(now);
 
-  if (now.Minute() == 30 && now.Second() == 0) {
-    single_strikes = 1;
-  }
-
-  double_strikes = now.Hour() % 4;
-  if (double_strikes == 0 && single_strikes == 0) double_strikes = 4;
-
-  Serial.println(double_strikes);
-  Serial.println(single_strikes);
-
-  if (double_strikes != 0 && (now.Minute() == 0 || now.Minute() == 30) && now.Second() == 0) {
-    for (int i = 0; i < double_strikes; i++) {
-      digitalWrite(buzzer,HIGH);
-      delay(200);
-      digitalWrite(buzzer,LOW);
-      delay(350);
-      digitalWrite(buzzer,HIGH);
-      delay(200);
-      digitalWrite(buzzer,LOW);
-      delay(500);
-    }
-  }
-
-    if (single_strikes != 0 && now.Second() == 0) {
-    for (int i = 0; i < single_strikes; i++) {
-      digitalWrite(buzzer,HIGH);
-      delay(200);
-      digitalWrite(buzzer,LOW);
-      delay(350);
-    }
-  }
-  single_strikes = 0;
-  double_strikes = 0;
   delay(1000);
 
 }
