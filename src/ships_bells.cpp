@@ -4,10 +4,80 @@
 
 int buzzer = 6; //the pin of the active buzzer
 RtcDS3231 clock;
-RtcDateTime dt;
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
+
+#define countof(a) (sizeof(a) / sizeof(a[0]))
+
+void printTime(const RtcDateTime& dt)
+{
+  //print the time to the lcd
+  char timestring[10];
+
+  snprintf_P(timestring,
+    countof(timestring),
+    PSTR("%02u:%02u:%02u"),
+    dt.Hour(),
+    dt.Minute(),
+    dt.Second() );
+  lcd.print(timestring);
+}
+
+void printDate(const RtcDateTime& dt)
+{
+  //print the time to the lcd
+  char datestring[10];
+
+  snprintf_P(datestring,
+    countof(datestring),
+    PSTR("%02u/%02u/%04u"),
+    dt.Hour(),
+    dt.Minute(),
+    dt.Second() );
+  lcd.print(datestring);
+}
+
+void bells(const RtcDateTime& now)
+{
+  int single_strikes;
+  single_strikes = 0;
+  int double_strikes;
+
+  if (now.Minute() == 30 && now.Second() == 0) {
+    single_strikes = 1;
+  }
+
+  double_strikes = now.Hour() % 4;
+  if (double_strikes == 0 && single_strikes == 0) double_strikes = 4;
+
+  Serial.println(double_strikes);
+  Serial.println(single_strikes);
+
+  if (double_strikes != 0 && (now.Minute() == 0 || now.Minute() == 30) && now.Second() == 0) {
+    for (int i = 0; i < double_strikes; i++) {
+      digitalWrite(buzzer,HIGH);
+      delay(200);
+      digitalWrite(buzzer,LOW);
+      delay(350);
+      digitalWrite(buzzer,HIGH);
+      delay(200);
+      digitalWrite(buzzer,LOW);
+      delay(500);
+    }
+  }
+
+    if (single_strikes != 0 && now.Second() == 0) {
+    for (int i = 0; i < single_strikes; i++) {
+      digitalWrite(buzzer,HIGH);
+      delay(200);
+      digitalWrite(buzzer,LOW);
+      delay(350);
+    }
+  }
+  single_strikes = 0;
+  double_strikes = 0;
+}
 
 void setup() {
 
@@ -28,62 +98,40 @@ void setup() {
   //initialize the buzzer pin as output
   pinMode(buzzer, OUTPUT);
 
+  // never assume the Rtc was last configured by you, so
+  // just clear them to your needed state
+  clock.Enable32kHzPin(false);
+  clock.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
+
 }
 
-void loop() {
+void loop()
+{
 
+  RtcDateTime now;
   //store DateTime in a local variable
-  dt = clock.GetDateTime();
+  now = clock.GetDateTime();
 
   //set the lcd cursor to column 0, line 0
   lcd.setCursor(0, 0 );
 
   //print the date to the lcd
-  lcd.print(String(dt.Month()) + "/" + String(dt.Day()) + "/" + String(dt.Year()));
+  printDate(now);
+
+  //print a blank space
+  lcd.print(" ");
+
+  //print the temperature
+  lcd.print(clock.GetTemperature().AsFloat());
 
   //set the lcd cursor to column 0, line 1
   lcd.setCursor(0, 1);
 
   //print the time to the lcd
-  lcd.print(String(dt.Hour()) + ":" + String(dt.Minute()) + ":" + String(dt.Second()));
+  printTime(now);
 
-  int single_strikes;
-  single_strikes = 0;
-  int double_strikes;
+  bells(now);
 
-  if (dt.Minute() == 30 && dt.Second() == 0) {
-    single_strikes = 1;
-  }
-
-  double_strikes = dt.Hour() % 4;
-  if (double_strikes == 0 && single_strikes == 0) double_strikes = 4;
-
-  Serial.println(double_strikes);
-  Serial.println(single_strikes);
-
-  if (double_strikes != 0 && (dt.Minute() == 0 || dt.Minute() == 30) && dt.Second() == 0) {
-    for (int i = 0; i < double_strikes; i++) {
-      digitalWrite(buzzer,HIGH);
-      delay(200);
-      digitalWrite(buzzer,LOW);
-      delay(350);
-      digitalWrite(buzzer,HIGH);
-      delay(200);
-      digitalWrite(buzzer,LOW);
-      delay(500);
-    }
-  }
-
-    if (single_strikes != 0 && dt.Second() == 0) {
-    for (int i = 0; i < single_strikes; i++) {
-      digitalWrite(buzzer,HIGH);
-      delay(200);
-      digitalWrite(buzzer,LOW);
-      delay(350);
-    }
-  }
-  single_strikes = 0;
-  double_strikes = 0;
   delay(1000);
 
 }
