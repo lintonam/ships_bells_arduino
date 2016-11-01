@@ -2,6 +2,11 @@
 #include <LiquidCrystal.h>
 #include <Wire.h>
 #include <ShipsBells.h>
+#include <SimpleDHT.h>
+
+int pinDHT11 = 2;
+
+SimpleDHT11 dht11;
 
 int buzzer = 6; //the pin of the active buzzer
 RtcDS3231 clock;
@@ -118,6 +123,19 @@ void loop()
   printTime(now);
 
   bells(now);
+
+  // read without samples.
+  byte temperature = 0;
+  byte humidity = 0;
+  if (dht11.read(pinDHT11, &temperature, &humidity, NULL)) {
+    Serial.print("Read DHT11 failed.");
+    return;
+  }
+
+  lcd.print("   ");
+
+  lcd.print((int)humidity);
+  lcd.print(" %");
 
   delay(1000);
 
